@@ -1,0 +1,28 @@
+{
+  "name": "backend-frontend",
+  "version": "0.1.0",
+  "description": "This collection package integrates the server and client for deployment.",
+  "main": "server/app.js",
+  "scripts": {
+    "postinstall": "npm install --prefix server && npm install --prefix client && npm run build --prefix client"
+  },
+  "engines": {
+    "npm": "9.x",
+    "node": "18.x"
+  },
+  "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^6.4.2",
+    "@fortawesome/free-solid-svg-icons": "^6.4.2",
+    "@fortawesome/vue-fontawesome": "^3.0.3",
+    "axios": "^1.5.0",
+    "bootstrap-vue": "^2.23.1",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "jsonwebtoken": "^9.0.2",
+    "socket.io": "^4.7.2",
+    "validator": "^13.11.0"
+  },
+  "devDependencies": {
+    "sass": "^1.68.0"
+  }
+}
