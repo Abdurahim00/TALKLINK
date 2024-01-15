@@ -85,19 +85,48 @@ const get_message_id = async (request, response) => {
 
 const get_message_from_chatroom = async (request, response) => {
   try {
-    const messageId = request.params.id;
     const chatroomId = request.params.chatroomId;
-    const chatroom = await Chatroom.findById(chatroomId);
-    const message = await Message.findById(chatroomId);
-    if (!message) {
-      return response.status(404).json({ message: "Message not found" });
+    const userId = request.userId; // Assuming this is how you get the current user's ID
+
+    // Fetch the chatroom and populate messages
+    const chatroom = await Chatroom.findById(chatroomId).populate('messages');
+
+    if (!chatroom) {
+      return response.status(404).json({ message: "Chatroom not found" });
     }
-    response.json(message);
-    
+
+    // Assuming you have a way to get the user's selected country/language preference
+    const currentUser = await User.findById(userId);
+    const currentUserLanguage = currentUser.selectedCountry; // Adjust this based on your user model
+
+    // Iterate over messages and translate if necessary
+    const messagesWithTranslation = await Promise.all(chatroom.messages.map(async (message) => {
+      // Fetch sender's language preference
+      const sender = await User.findById(message.sender);
+      const senderLanguage = sender.selectedCountry; // Adjust based on your user model
+
+      // Check if translation is needed
+      if (currentUserLanguage !== senderLanguage) {
+        // Call your translation function here and get the translated text
+        const translatedText = await translateMessage(message.message, currentUserLanguage);
+
+        return {
+          ...message.toObject(),
+          translatedMessage: translatedText
+        };
+      } else {
+        // No translation needed
+        return message;
+      }
+    }));
+
+    response.json(messagesWithTranslation);
   } catch (error) {
+    console.error(error);
     response.status(500).send(error);
   }
-}
+};
+
 
 const message_chatroom = async (request, response) => {
   try {
