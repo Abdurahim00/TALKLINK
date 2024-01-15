@@ -1,3 +1,4 @@
+/* eslint-disable */
 <head>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Sofia">
   <style>

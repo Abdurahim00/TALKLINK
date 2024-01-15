@@ -706,11 +706,6 @@ export default {
     font-size: 0.8em;
   }
 
-  .fade-enter-active,
-  .fade-leave-to {}
-
-  .fade-enter,
-  .fade-leave-to {}
 
   .sent {
     text-align: right;

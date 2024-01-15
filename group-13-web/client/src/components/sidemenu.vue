@@ -1,3 +1,4 @@
+/* eslint-disable */
 <template>
   <div class="Bar-layout">
     <div class="username-icon">

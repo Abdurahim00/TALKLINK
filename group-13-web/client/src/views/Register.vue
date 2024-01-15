@@ -7,23 +7,25 @@
       <input type="text" v-model="user_name" placeholder="Username" style="font-size: 22px; font-family:system-ui; padding-left: 5%;" >
       <i class="fa-solid fa-user"></i>
       </div>
-
       <br>
-
       <div class="input-icon-email">
       <input type="email" v-model="email" placeholder="Email" style="font-size: 22px; font-family:system-ui; padding-left: 5%;">
       <i class="fa-solid fa-envelope"></i>
       </div>
-
       <br>
-
       <div class="input-icon-password">
       <input type="password" v-model="password" placeholder="Password" style="font-size: 22px; font-family: system-ui; padding-left: 5%;">
       <i class="fa-solid fa-lock"></i>
       </div>
-
       <br>
+      <div class="input-country">
+      <select  v-model="selectedCountry" style="font-size: 22px; font-family: system-ui; padding-left: 5%;">
+        <option disabled value="">Select a language</option>
+    <option v-for="country in countries" :key="country" :value="country">{{ country }}</option>
+  </select>
 
+      </div>
+      <br>
       <button style="font-family:system-ui ;">Sign up</button>
 
       <div class="login-link">
@@ -36,14 +38,16 @@
 <font-awesome-icon icon="user" />
 <script>
 
-import axios from 'axios'
+import axios, { HttpStatusCode } from 'axios'
 
 export default {
   data() {
     return {
       user_name: '',
       email: '',
-      password: ''
+      password: '',
+      countries: ['English', 'Arabic', 'Spanish', 'French', 'German'],
+      selectedCountry: ''
     }
   },
   methods: {
@@ -52,7 +56,8 @@ export default {
         const response = await axios.post('http://localhost:3000/users', {
           user_name: this.user_name,
           email: this.email,
-          password: this.password
+          password: this.password,
+          selectedCountry: this.selectedCountry,
         }, { withCredentials: true })
         console.log(response.data)
         alert('Registration successful')
@@ -162,8 +167,21 @@ transform: translateY(-50%);
 position: relative;
 display: inline-block ;
 }
+.input-country{
+
+position: relative;
+display: inline-block ;
+}
 
 .input-icon-password i{
+color: black;
+position: absolute;
+top: 60%;
+right: 25px;
+pointer-events: none;
+transform: translateY(-50%);
+}
+.input-country i{
 color: black;
 position: absolute;
 top: 60%;

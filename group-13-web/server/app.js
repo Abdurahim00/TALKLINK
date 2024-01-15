@@ -28,6 +28,7 @@ var mongoURI = process.env.MONGODB_URI;
 var port = process.env.PORT || 3000;
 
 // Connect to MongoDB
+mongoose.set('strictQuery', true);
 mongoose.connect(mongoURI, { useNewUrlParser: true }).catch(function(err) {
     if (err) {  
         console.error(`Failed to connect to MongoDB with URI: ${mongoURI}`);

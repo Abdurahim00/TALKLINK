@@ -22,7 +22,11 @@ const userSchema = new Schema({
   isAdmin: {
     type: Boolean,
     default: false  // Default is not an admin
-  }
+  },
+    selectedCountry: {
+    type: String,
+    required: [true, 'please choose a country']
+  },
 });
 
 const User = mongoose.model('users', userSchema);
