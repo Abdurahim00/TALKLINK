@@ -19,7 +19,14 @@ const userSchema = new Schema({
     required: [true, 'please enter a password'],
     minlength: [6, 'Minimum password length is 6 characters'],
   },
-  
+  isAdmin: {
+    type: Boolean,
+    default: false  // Default is not an admin
+  },
+    country: {
+    type: String,
+    required: true
+  },
 });
 
 const User = mongoose.model('users', userSchema);
