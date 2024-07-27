@@ -1,7 +1,6 @@
 const express = require("express");
-const app = express();
+const router = express.Router();
 const jwt = require("jsonwebtoken");
-const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const { checkUser } = require("../controllers/user_controller");
 const {
@@ -18,33 +17,32 @@ const {
   logout_user
 } = require("../controllers/user_controller");
 
-app.use(bodyParser.json());
-app.use(cookieParser());
-app.use(checkUser);
+router.use(cookieParser());
+router.use(checkUser);
 
-app.post("/users", post_user);
+router.post("/users", post_user);
 
-app.get("/users", get_user);
+router.get("/users", get_user);
 
-app.get("/users/all", get_all_users);
+router.get("/users/all", get_all_users);
 
-app.get("/users/:id", get_user_id);
+router.get("/users/:id", get_user_id);
 
-app.put("/users/:id", update_user);
+router.put("/users/:id", update_user);
 
-app.delete("/users/:id", delete_user);
+router.delete("/users/:id", delete_user);
 
-app.post("/login", login_user);
+router.post("/login", login_user);
 
-app.patch("/username/:id", patch_username);
+router.patch("/username/:id", patch_username);
 
-app.patch("/password/:id", patch_password);
+router.patch("/password/:id", patch_password);
 
-app.get("/current-user", currentUser);
+router.get("/current-user", currentUser);
 
-app.post("/logout", logout_user);
+router.post("/logout", logout_user);
 
-app.get("/debug-decode-token", (req, res) => {
+router.get("/debug-decode-token", (req, res) => {
   const token = req.cookies.jwt;
   if (token) {
     const decodedToken = jwt.verify(token, "secret");
@@ -53,4 +51,4 @@ app.get("/debug-decode-token", (req, res) => {
   res.json({ error: "No token provided" });
 });
 
-module.exports = app;
+module.exports = router;

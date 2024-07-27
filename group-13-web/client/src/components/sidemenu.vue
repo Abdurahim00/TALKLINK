@@ -44,8 +44,9 @@
 </template>
 
 <script>
-import axios from 'axios'
 import Vue from 'vue'
+import Api from '../Api';
+
 
 Vue.prototype.$eventBus = new Vue()
 
@@ -64,8 +65,8 @@ export default {
     }
   },
   mounted() {
-    axios
-      .get('http://localhost:3000/current-user', { withCredentials: true })
+    Api
+      .get('/current-user')
       .then((response) => {
         this.loggedInUserId = response.data.userId
         this.getAllFriends()
@@ -78,8 +79,8 @@ export default {
   methods: {
     async getAllFriends() {
       try {
-        const response = await axios.get(
-          `http://localhost:3000/chatrooms/users/${this.loggedInUserId}`
+        const response = await Api.get(
+          `/chatrooms/users/${this.loggedInUserId}`
         )
         this.users = response.data.otherUsers
         this.chatroomIDs = response.data.chatroomIDs
@@ -91,7 +92,7 @@ export default {
     },
     async fetchLoggedInUsername() {
       try {
-        const response = await axios.get(`http://localhost:3000/users/${this.loggedInUserId}`)
+        const response = await Api.get(`/users/${this.loggedInUserId}`)
         this.loggedInUsername = response.data.user_name
       } catch (error) {
         console.error('Error fetching logged-in username:', error)
@@ -102,7 +103,7 @@ export default {
       try {
         const responses = await Promise.all(
           this.users.map((userId) =>
-            axios.get(`http://localhost:3000/users/${userId}`)
+            Api.get(`/users/${userId}`)
           )
         )
         responses.forEach((response, index) => {
@@ -115,8 +116,8 @@ export default {
     },
     achievementID(index) {
       if (this.counter < this.chatroomIDs.length) {
-        axios
-          .get(`http://localhost:3000/chatrooms/${this.chatroomIDs[index]}`)
+        Api
+          .get(`/chatrooms/${this.chatroomIDs[index]}`)
           .then((response) => {
             const length = response.data.achCount
             let imageURL
@@ -147,7 +148,7 @@ export default {
 
     async searchUser() {
       try {
-        const response = await axios.get('http://localhost:3000/users', {
+        const response = await Api.get('/users', {
           params: {
             searchQuery: this.searchQuery
           }
@@ -182,12 +183,12 @@ export default {
       if (!confirmDelete) return
 
       try {
-        const chatroomId = await axios.post(
-          `http://localhost:3000/chatroom-for-user/${userId}/${this.loggedInUserId}`
+        const chatroomId = await Api.post(
+          `/chatroom-for-user/${userId}/${this.loggedInUserId}`
         )
         console.log('to be deleted chatroom', chatroomId.data.chatroomId)
-        axios.delete(
-          `http://localhost:3000/chatrooms/${chatroomId.data.chatroomId}`
+        Api.delete(
+          `/chatrooms/${chatroomId.data.chatroomId}`
         )
         location.reload()
 

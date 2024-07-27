@@ -33,16 +33,17 @@ import Chatrooms from '../components/Chatrooms.vue'
 import Chattbars from '../components/chattbars.vue'
 import Navbar from '../components/navbar.vue'
 import Sidemenu from '../components/sidemenu.vue'
-import axios from 'axios'
 import Vue from 'vue'
+import Api from '../Api';
+
 
 export const eventBus = new Vue()
 
 export default {
   mounted() {
     // Fetch the logged-in user's ID when the component mounts
-    axios
-      .get('http://localhost:3000/current-user', { withCredentials: true })
+    Api
+      .get('/current-user')
       .then((response) => {
         this.idOfLoggedInUser = response.data.userId
       })
@@ -77,8 +78,8 @@ export default {
       console.log('chatroom id', this.chatroomId)
 
       // Make a call to the backend to get the chatroom ID for this user
-      axios
-        .post(`http://localhost:3000/chatroom-for-user/${this.idOfLoggedInUser}/${userId}`)
+      Api
+        .post(`/chatroom-for-user/${this.idOfLoggedInUser}/${userId}`)
         .then((response) => {
           this.currentChatroomId = response.data.chatroomId
           console.log(this.currentChatroomId)

@@ -85,7 +85,7 @@
   </div></div>
 </template>
 <script>
-import axios from 'axios'
+import Api from '../Api';
 
 export default {
   data() {
@@ -105,10 +105,10 @@ export default {
     }
   },
   mounted() {
-    axios
-      .get('http://localhost:3000/current-user', { withCredentials: true })
+    Api
+      .get('/current-user')
       .then((response) => {
-        axios.defaults.withCredentials = true
+        Api.defaults.withCredentials = true
         this.username = response.data.userId
         this.userId = response.data.userId
         this.isAdmin = response.data.isAdmin
@@ -166,8 +166,8 @@ export default {
       this.changeUsername = false
     },
     getUsername() {
-      axios
-        .get(`http://localhost:3000/users/${this.userId}`)
+      Api
+        .get(`/users/${this.userId}`)
         .then((response) => {
           console.log('Received user data:', response.data.user_name)
           this.username = response.data.user_name
@@ -178,7 +178,7 @@ export default {
     },
     async deleteAllMessages() {
       try {
-        const response = await axios.delete('http://localhost:3000/messages')
+        const response = await Api.delete('/messages')
         console.log('Successfully deleted all messages', response.data)
         alert('Successfully deleted all messages')
         // Optionally, you can reload the page or redirect the user somewhere else after the deletion
@@ -190,8 +190,8 @@ export default {
 
     async updateUsername(newName) {
       try {
-        const response = await axios
-          .patch('http://localhost:3000/username/' + this.userId, {
+        const response = await Api
+          .patch('/username/' + this.userId, {
             username: newName
           })
           .then(window.location.reload())
@@ -204,8 +204,8 @@ export default {
     },
     async updatePassword(newPass) {
       try {
-        const response = await axios
-          .patch('http://localhost:3000/password/' + this.userId, {
+        const response = await Api
+          .patch('/password/' + this.userId, {
             password: newPass
           })
           .then(alert('Succesfully changed password'))
@@ -227,7 +227,7 @@ export default {
     async logoff() {
       try {
         this.$router.push({ path: '/login' })
-        await axios.post('http://localhost:3000/logout')
+        await Api.post('/logout')
         console.log('loginging out')
       } catch (error) {
         console.error('Error during logout:', error)
@@ -236,8 +236,8 @@ export default {
 
     async put_user(newName, newPass, newEmail) {
       try {
-        const response = await axios
-          .put('http://localhost:3000/users/' + this.userId, {
+        const response = await Api
+          .put('/users/' + this.userId, {
             user_name: newName,
             password: newPass,
             email: newEmail

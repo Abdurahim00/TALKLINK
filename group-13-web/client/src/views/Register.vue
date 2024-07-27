@@ -38,7 +38,8 @@
 <font-awesome-icon icon="user" />
 <script>
 
-import axios, { HttpStatusCode } from 'axios'
+
+import Api from '../Api';
 
 export default {
   data() {
@@ -53,7 +54,7 @@ export default {
   methods: {
     async register() {
       try {
-        const response = await axios.post('http://localhost:3000/users', {
+        const response = await Api.post('/users', {
           user_name: this.user_name,
           email: this.email,
           password: this.password,

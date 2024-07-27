@@ -23,8 +23,9 @@
 </template>
 
 <script>
-import axios from 'axios'
 import Vue from 'vue'
+import Api from '../Api';
+
 
 Vue.prototype.$eventBus = new Vue()
 
@@ -44,15 +45,15 @@ export default {
     }
   },
   mounted() {
-    this.fetchRoutesForLevels()
-    axios.get('http://localhost:3000/current-user', { withCredentials: true })
+    this.fetchRoutesForLevels();
+    Api.get('/current-user')
       .then((response) => {
-        this.loggedInUserId = response.data.userId
-        this.getAllFriends()
+        this.loggedInUserId = response.data.userId;
+        this.getAllFriends();
       })
       .catch((error) => {
-        console.error('Error fetching current user:', error)
-      })
+        console.error('Error fetching current user:', error);
+      });
   },
   methods: {
     getImage(index) {
@@ -72,7 +73,7 @@ export default {
 
       // Iterate through levels 1 to 5 and create an array of promises
       for (let level = 1; level <= 5; level++) {
-        const promise = axios.get(`http://localhost:3000/achievements/${level}`)
+        const promise = Api.get(`/achievements/${level}`)
           .then(response => {
             if (response.data) {
               return `${response.data}`
@@ -97,7 +98,7 @@ export default {
 
     async getAllFriends() {
       try {
-        const response = await axios.get(`http://localhost:3000/chatrooms/users/${this.loggedInUserId}`)
+        const response = await Api.get(`/chatrooms/users/${this.loggedInUserId}`)
         this.users = response.data.otherUsers
         this.chatroomIDs = response.data.chatroomIDs
         console.log('chatroomIDs', this.chatroomIDs)
@@ -109,7 +110,7 @@ export default {
 
     async fetchUsernamesForUsers() {
       try {
-        const responses = await Promise.all(this.users.map(userId => axios.get(`http://localhost:3000/users/${userId}`)))
+        const responses = await Promise.all(this.users.map(userId => Api.get(`/users/${userId}`)))
         responses.forEach((response, index) => {
           this.$set(this.usernames, this.users[index], response.data.user_name) // Use $set for reactivity
           this.achievementID(index)
@@ -120,8 +121,8 @@ export default {
     },
     achievementID(index) {
       if (this.counter < this.chatroomIDs.length) {
-        axios
-          .get(`http://localhost:3000/chatrooms/${this.chatroomIDs[index]}`)
+        Api
+          .get(`/chatrooms/${this.chatroomIDs[index]}`)
           .then((response) => {
             const length = response.data.achCount
             let imageURL
@@ -154,7 +155,7 @@ export default {
 
     async searchUser() {
       try {
-        const response = await axios.get('http://localhost:3000/users', {
+        const response = await Api.get('/users', {
           params: {
             searchQuery: this.searchQuery
           }
@@ -187,9 +188,9 @@ export default {
       if (!confirmDelete) return
 
       try {
-        const chatroomId = await axios.post(`http://localhost:3000/chatroom-for-user/${userId}/${this.loggedInUserId}`)
+        const chatroomId = await Api.post(`/chatroom-for-user/${userId}/${this.loggedInUserId}`)
         console.log('to be deleted chatroom', chatroomId.data.chatroomId)
-        axios.delete(`http://localhost:3000/chatrooms/${chatroomId.data.chatroomId}`)
+        Api.delete(`/chatrooms/${chatroomId.data.chatroomId}`)
         location.reload()
 
         /* await axios.delete(`http://localhost:3000/users/${userId}`)
