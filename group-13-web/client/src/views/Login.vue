@@ -59,11 +59,10 @@ export default {
         alert('Login failed')
       }
     }
-
   }
 }
-
 </script>
+
 
 <style scoped>
 .register-link {

@@ -1,8 +1,9 @@
 import axios from 'axios';
 
 const Api = axios.create({
-  baseURL: process.env.VUE_APP_API_ENDPOINT,
-  withCredentials: true
+  baseURL: process.env.VUE_APP_API_ENDPOINT || 'http://localhost:3000/'
+
+,  withCredentials: true
 });
 
 export default Api;

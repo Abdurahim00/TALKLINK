@@ -47,13 +47,39 @@
     </div>
   </div>
 </template>
+
 <script>
-import Api from '../Api';
-import io from 'socket.io-client';
+import axios from 'axios'
+import io from 'socket.io-client'
 
 export default {
   mounted() {
-    this.initializeComponent();
+    // Fetching the logged-in user's ID
+    this.fetchRoutesForLevels()
+
+    axios
+      .get('http://localhost:3000/current-user', { withCredentials: true })
+      .then((response) => {
+        axios.defaults.withCredentials = true
+
+        this.loggedInUserId = response.data.userId
+      })
+      .catch((error) => {
+        console.error('Error fetching current user:', error)
+      })
+
+    this.socket = io('http://localhost:3000')
+
+    this.socket.on('chat message', (msg, room) => {
+      if (this.chatroomId !== room) {
+        console.log(this.chatroomId)
+        console.log(room)
+        this.loadMessages(this.chatroomId)
+        this.achievementID(this.chatroomId)
+        this.messages.push(msg)
+        this.scrollToBottom()
+      }
+    })
   },
 
   data() {
@@ -66,189 +92,177 @@ export default {
       showChatroom: false,
       imageURL: '',
       routes: []
-    };
+    }
   },
   created() {
-    this.$eventBus.$on('hideChatroomEvent', this.handleHideChatroom);
-    this.$eventBus.$on('showChatroomEvent', this.handleShowChatroom);
+    this.$eventBus.$on('hideChatroomEvent', this.handleHideChatroom)
+    this.$eventBus.$on('showChatroomEvent', this.handleShowChatroom)
   },
   beforeDestroy() {
-    this.$eventBus.$off('hideChatroomEvent', this.handleHideChatroom);
-    this.$eventBus.$off('showChatroomEvent', this.handleShowChatroom);
-    if (this.socket) {
-      this.socket.disconnect();
-    }
+    this.$eventBus.$off('hideChatroomEvent', this.handleHideChatroom)
+    this.$eventBus.$off('showChatroomEvent', this.handleShowChatroom)
   },
   props: ['chatroomId'],
   watch: {
     chatroomId(newVal, oldVal) {
       if (newVal !== oldVal) {
-        this.loadMessages(newVal);
-        this.achievementID(newVal);
+        this.loadMessages(newVal)
+        this.achievementID(newVal)
       }
     },
     chosenUser: 'getUsername'
   },
   methods: {
-    async initializeComponent() {
-  try {
-    await this.fetchRoutesForLevels();
+    async fetchRoutesForLevels() {
+      this.routes = [] // Clear the existing routes
 
-    const response = await Api.get('/current-user', { withCredentials: true });
-    Api.defaults.withCredentials = true;
-    this.loggedInUserId = response.data.userId;
+      const levelPromises = []
 
-    const socketURL = 'wss://talklink.online/';
-    this.socket = io(socketURL, { path: '/socket.io', transports: ['websocket'], pingInterval: 1000 * 60 * 5,
-    pingTimeout: 1000 * 60 * 3 });
-
-    this.socket.on('connect', () => {
-      console.log('Connected to the server via Socket.IO');
-    });
-
-    this.socket.on('chat message', (msg, room) => {
-      if (this.chatroomId === room) {
-        this.messages.push(msg);
-        this.scrollToBottom();
+      // Iterate through levels 1 to 5 and create an array of promises
+      for (let level = 1; level <= 5; level++) {
+        const promise = axios.get(`http://localhost:3000/achievements/${level}`)
+          .then(response => {
+            if (response.data) {
+              return `${response.data}`
+            }
+            return null
+          })
+          .catch(error => {
+            console.error(`Error fetching route for level ${level}:`, error)
+            return null // Handle the error as needed, and return null for this route
+          })
+        levelPromises.push(promise)
       }
-    });
 
-    this.socket.on('disconnect', () => {
-      console.log('Disconnected from the server');
-    });
+      // Use Promise.all to wait for all promises to resolve
+      const routes = await Promise.all(levelPromises)
 
-    this.socket.on('connect_error', (error) => {
-      console.error('Connection error:', error);
-    });
+      // Filter out null routes (routes with errors)
+      this.routes = routes.filter(route => route !== null)
 
-    this.socket.on('error', (error) => {
-      console.error('Socket.IO error:', error);
-    });
+      console.log('All routes fetched:', this.routes)
+    },
+    // TODO: fix translation
+    translate(language, text) {
+      axios.post('https://translation.googleapis.com/language/translate/v2',
+        {
+          q: text,
+          source: 'en',
+          target: language,
+          format: 'text'
+        },
+        { Authorization: 'bearer' })
+    },
+    handleHideChatroom() {
+      this.showChatroom = !this.showChatroom
 
-  } catch (error) {
-    console.error('Error during initialization:', error);
+      console.log(this.showChatroom)
+    },
+    handleShowChatroom() {
+      // Add this method
+      this.showChatroom = true
+    },
+    loadMessages(chatroomId) {
+  if (!chatroomId) {
+    console.error('chatroomId is not defined');
+    return;
   }
+
+  this.chatroomIdValue = chatroomId;
+  console.log('Loading messages for chatroom:', chatroomId);
+  axios
+    .get(`http://localhost:3000/chatrooms/${chatroomId}/messages`)
+    .then((response) => {
+      console.log('Received messages data:', response.data);
+      this.messages = response.data;
+      this.scrollToBottom();
+      this.achievementID(chatroomId);
+    })
+    .catch((error) => {
+      console.error('Error loading messages:', error);
+    });
 }
 
 ,
-
-    async fetchRoutesForLevels() {
-      this.routes = [];
-      const levelPromises = [];
-
-      for (let level = 1; level <= 5; level++) {
-        const promise = Api.get(`/achievements/${level}`)
-          .then(response => response.data || null)
-          .catch(error => {
-            console.error(`Error fetching route for level ${level}:`, error);
-            return null;
-          });
-        levelPromises.push(promise);
-      }
-
-      const routes = await Promise.all(levelPromises);
-      this.routes = routes.filter(route => route !== null);
-      console.log('All routes fetched:', this.routes);
-    },
-
-    handleHideChatroom() {
-      this.showChatroom = false;
-      console.log('Chatroom hidden');
-    },
-
-    handleShowChatroom() {
-      this.showChatroom = true;
-    },
-
-    loadMessages(chatroomId) {
-      this.chatroomIdValue = chatroomId;
-      console.log('Loading messages for chatroom:', chatroomId);
-      Api.get(`/chatrooms/${chatroomId}/messages`)
-        .then(response => {
-          console.log('Received messages data:', response.data);
-          this.messages = response.data;
-          this.scrollToBottom();
-          this.achievementID(chatroomId);
-        })
-        .catch(error => {
-          console.error('Error loading messages:', error);
-        });
-    },
-
     achievementID(chatroomId) {
-      Api.get(`/chatrooms/${chatroomId}`)
-        .then(response => {
-          const length = response.data.achCount;
+      let length = 0
+      axios
+        .get(`http://localhost:3000/chatrooms/${chatroomId}`)
+        .then((response) => {
+          length = response.data.achCount
           if (length <= 5) {
-            this.imageURL = require('@/assets/' + this.routes[0]);
+            this.imageURL = require('@/assets/' + this.routes[0])
           } else if (length > 5 && length <= 10) {
-            this.imageURL = require('@/assets/' + this.routes[1]);
+            this.imageURL = require('@/assets/' + this.routes[1])
           } else if (length > 10 && length <= 15) {
-            this.imageURL = require('@/assets/' + this.routes[2]);
+            this.imageURL = require('@/assets/' + this.routes[2])
           } else if (length > 15 && length <= 20) {
-            this.imageURL = require('@/assets/' + this.routes[3]);
+            this.imageURL = require('@/assets/' + this.routes[3])
           } else if (length > 20) {
-            this.imageURL = require('@/assets/' + this.routes[4]);
+            this.imageURL = require('@/assets/' + this.routes[4])
           }
         })
-        .catch(error => {
-          console.error('Error loading achievement data:', error);
-        });
-    },
-
-    setChosenUser(user) {
-      console.log('Chosen user:', user);
-      this.chosenUser = user;
-    },
-
-    getUsername(user) {
-      Api.get(`/users/${user}`)
-        .then(response => {
-          console.log('Received user data:', response.data.user_name);
-          this.chosenUsername = response.data.user_name;
+        .catch((error) => {
+          console.error('Error loading messages:', error)
         })
-        .catch(error => {
-          console.error('Error loading username:', error);
-        });
     },
-
+    setChosenUser(user) {
+      console.log('chosen from chatrooms:' + user)
+      this.chosenUser = user
+    },
+    getUsername(user) {
+      axios
+        .get(`http://localhost:3000/users/${user}`)
+        .then((response) => {
+          console.log('Received user data:', response.data.user_name)
+          this.chosenUsername = response.data.user_name
+        })
+        .catch((error) => {
+          console.error('Error loading username:', error)
+        })
+    },
     sendMessage() {
       if (this.newMessage.trim() !== '') {
         const messageData = {
           sender: this.loggedInUserId,
           recipient: this.chosenUser,
           message: this.newMessage
-        };
+        }
 
-        Api.post('/messages', messageData)
-          .then(response => {
-            this.newMessage = '';
-            this.scrollToBottom();
-            this.socket.emit('chat message', response.data, this.chatroomIdValue);
+        console.log(messageData.recipient)
+        console.log(messageData.sender)
+        axios
+          .post('http://localhost:3000/messages', messageData)
+          .then((response) => {
+            this.newMessage = ''
+            this.scrollToBottom()
+            this.socket.emit('chat message', response.data, this.chatroomIdValue)
           })
-          .catch(error => {
-            console.error('Error sending message:', error);
-          });
+          .catch((error) => {
+            console.error('Error sending message:', error)
+          })
       }
     },
 
     formatTimestamp(timestamp) {
-      const timestampDate = new Date(timestamp);
-      const hours = timestampDate.getHours();
-      const minutes = timestampDate.getMinutes();
-      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-    },
+      const timestampDate = new Date(timestamp)
+      const hours = timestampDate.getHours()
+      const minutes = timestampDate.getMinutes()
+      const formattedTime = `${hours.toString().padStart(2, '0')}:${minutes
+        .toString()
+        .padStart(2, '0')}`
 
+      return formattedTime
+    },
     scrollToBottom() {
       this.$nextTick(() => {
-        const chatArea = this.$refs.chatArea;
-        chatArea.scrollTop = chatArea.scrollHeight;
-      });
+        const chatArea = this.$refs.chatArea
+        chatArea.scrollTop = chatArea.scrollHeight
+      })
     }
   }
 }
 </script>
-
 
 <style>
 .Welcome-text {
@@ -699,6 +713,11 @@ export default {
     font-size: 0.8em;
   }
 
+  .fade-enter-active,
+  .fade-leave-to {}
+
+  .fade-enter,
+  .fade-leave-to {}
 
   .sent {
     text-align: right;

@@ -118,16 +118,39 @@ const get_chatroom = async (request, response) => {
 const get_chatroom_id = async (request, response) => {
   try {
     const chatroomId = request.params.id;
+    if (!chatroomId) {
+      return response.status(400).send("Chatroom ID is required");
+    }
+
     const chatroom = await Chatroom.findById(chatroomId).populate("users");
     if (!chatroom) {
       return response.status(404).send("Chatroom not found");
     }
 
-    var achCount = chatroom.messages.length;
+    const achCount = chatroom.messages.length;
 
     response.send({ chatroom, achCount });
   } catch (error) {
-    response.status(500).send(error);
+    console.error("Error retrieving chatroom:", error);
+    response.status(500).send({ error: "Error retrieving chatroom" });
+  }
+};
+const get_chatroom_messages = async (req, res) => {
+  try {
+    const chatroomId = req.params.id;
+    if (!chatroomId) {
+      return res.status(400).send("Chatroom ID is required");
+    }
+
+    const chatroom = await Chatroom.findById(chatroomId);
+    if (!chatroom) {
+      return res.status(404).send("Chatroom not found");
+    }
+
+    res.send(chatroom.messages);
+  } catch (error) {
+    console.error("Error retrieving messages:", error);
+    res.status(500).send({ error: "Error retrieving messages" });
   }
 };
 
@@ -148,5 +171,6 @@ module.exports = {
   delete_chatroom,
   getOrCreateChatroom,
   getFriends,
-  delete_all_chatrooms
+  delete_all_chatrooms,
+  get_chatroom_messages
 };
