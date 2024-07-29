@@ -1,19 +1,32 @@
 module.exports = {
-  configureWebpack: {
-    devtool: 'source-map'
-  },
   devServer: {
+    host: '0.0.0.0',
+    port: 8080,
+    allowedHosts: [
+      'talklink.online',
+      'localhost'
+    ],
     proxy: {
       '/api': {
-        target: 'http://localhost:3000', // Your backend server
+        target: 'https://talklink.online',
         changeOrigin: true,
-        pathRewrite: { '^/api': '' }, // Remove /api prefix when forwarding to backend
+        secure: true,
       },
       '/socket.io': {
-        target: 'http://localhost:3000',
-        ws: true, // Enable WebSocket proxying
+        target: 'https://talklink.online',
+        ws: true,
         changeOrigin: true,
+        secure: true,
       }
-    }
+    },
+    headers: {
+      'Access-Control-Allow-Origin': '*'
+    },
+    client: {
+      webSocketURL: 'wss://talklink.online/socket.io',
+    },
+  },
+  configureWebpack: {
+    devtool: 'source-map'
   }
-}
+};

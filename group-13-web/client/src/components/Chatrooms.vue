@@ -54,33 +54,43 @@ import io from 'socket.io-client'
 
 export default {
   mounted() {
-    // Fetching the logged-in user's ID
-    this.fetchRoutesForLevels()
+  // Fetching the logged-in user's ID
+  this.fetchRoutesForLevels();
 
-    axios
-      .get('http://localhost:3000/current-user', { withCredentials: true })
-      .then((response) => {
-        axios.defaults.withCredentials = true
+  const apiUrl = process.env.VUE_APP_API_URL || 'http://localhost:3000';
+  const wsUrl = process.env.VUE_APP_WS_URL || 'wss://localhost:3000';
 
-        this.loggedInUserId = response.data.userId
-      })
-      .catch((error) => {
-        console.error('Error fetching current user:', error)
-      })
+  axios
+    .get(`${apiUrl}/current-user`, { withCredentials: true })
+    .then((response) => {
+      axios.defaults.withCredentials = true;
 
-    this.socket = io('http://localhost:3000')
-
-    this.socket.on('chat message', (msg, room) => {
-      if (this.chatroomId !== room) {
-        console.log(this.chatroomId)
-        console.log(room)
-        this.loadMessages(this.chatroomId)
-        this.achievementID(this.chatroomId)
-        this.messages.push(msg)
-        this.scrollToBottom()
-      }
+      this.loggedInUserId = response.data.userId;
     })
-  },
+    .catch((error) => {
+      console.error('Error fetching current user:', error);
+    });
+
+  this.socket = io(wsUrl, {
+    path: '/socket.io',
+    transports: ['websocket', 'polling'],
+    pingInterval: 1000 * 60 * 5,
+    pingTimeout: 1000 * 60 * 3
+  });
+
+  this.socket.on('chat message', (msg, room) => {
+    if (this.chatroomId !== room) {
+      console.log(this.chatroomId);
+      console.log(room);
+      this.loadMessages(this.chatroomId);
+      this.achievementID(this.chatroomId);
+      this.messages.push(msg);
+      this.scrollToBottom();
+    }
+  });
+},
+
+
 
   data() {
     return {
